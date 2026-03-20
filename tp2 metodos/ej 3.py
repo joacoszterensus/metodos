@@ -1,0 +1,303 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def dN_dt(n,p,r,alpha):
+    return r*n-alpha*n*p
+
+def dP_dt(n,p,beta,q):
+    return beta*n*p-q*p
+
+def dN_dt_LVE(n,k,p,r,alpha):
+    return r*n*(1-n/k)-alpha*n*p
+
+def runge_kutta_4(dN_dt, dP_dt, n0, p0, r,q, alpha, beta, dt, steps):
+
+    n_values = [n0]
+    p_values = [p0]
+    
+    for i in range(1, steps+1):
+        k1_n = dN_dt(n_values[-1], p_values[-1], r, alpha)
+        k1_p = dP_dt(n_values[-1], p_values[-1], beta, q)
+        
+        k2_n = dN_dt(n_values[-1] + 0.5*dt*k1_n, p_values[-1] + 0.5*dt*k1_p, r, alpha)
+        k2_p = dP_dt(n_values[-1] + 0.5*dt*k1_n, p_values[-1] + 0.5*dt*k1_p, beta, q)
+        
+        k3_n = dN_dt(n_values[-1] + 0.5*dt*k2_n, p_values[-1] + 0.5*dt*k2_p, r, alpha)
+        k3_p = dP_dt(n_values[-1] + 0.5*dt*k2_n, p_values[-1] + 0.5*dt*k2_p, beta, q)
+        
+        k4_n = dN_dt(n_values[-1] + dt*k3_n, p_values[-1] + dt*k3_p, r, alpha)
+        k4_p = dP_dt(n_values[-1] + dt*k3_n, p_values[-1] + dt*k3_p, beta, q)
+        
+        n_new = n_values[-1] + (dt/6)*(k1_n + 2*k2_n + 2*k3_n + k4_n)
+        p_new = p_values[-1] + (dt/6)*(k1_p + 2*k2_p + 2*k3_p + k4_p)
+        
+        n_values.append(n_new)
+        p_values.append(p_new)
+    
+    return n_values, p_values
+
+def runge_kutta_4_2(dN_dt, dP_dt, n0, p0, r,q, alpha, beta,k, dt, steps):
+    n_values = [n0]
+    p_values = [p0]
+    
+    for i in range(1, steps+1):
+        k1_n = dN_dt(n_values[-1],k, p_values[-1], r, alpha)
+        k1_p = dP_dt(n_values[-1], p_values[-1], beta, q)
+        
+        k2_n = dN_dt(n_values[-1] + 0.5*dt*k1_n,k, p_values[-1] + 0.5*dt*k1_p, r, alpha)
+        k2_p = dP_dt(n_values[-1] + 0.5*dt*k1_n, p_values[-1] + 0.5*dt*k1_p, beta, q)
+        
+        k3_n = dN_dt(n_values[-1] + 0.5*dt*k2_n,k, p_values[-1] + 0.5*dt*k2_p, r, alpha)
+        k3_p = dP_dt(n_values[-1] + 0.5*dt*k2_n, p_values[-1] + 0.5*dt*k2_p, beta, q)
+        
+        k4_n = dN_dt(n_values[-1] + dt*k3_n,k, p_values[-1] + dt*k3_p, r, alpha)
+        k4_p = dP_dt(n_values[-1] + dt*k3_n, p_values[-1] + dt*k3_p, beta, q)
+        
+        n_new = n_values[-1] + (dt/6)*(k1_n + 2*k2_n + 2*k3_n + k4_n)
+        p_new = p_values[-1] + (dt/6)*(k1_p + 2*k2_p + 2*k3_p + k4_p)
+        
+        n_values.append(n_new)
+        p_values.append(p_new)
+    
+    return n_values, p_values
+
+def plot_population(ax, tiempo, n1Poblacion, n2Poblacion, label):
+    ax.plot(tiempo, n1Poblacion, label=label+" Presa") 
+    ax.plot(tiempo, n2Poblacion, label=label+" depredador") 
+    ax.legend()
+
+def isoclinas_DN_DT(r,alpha):
+    return r/alpha
+def isoclinas_DP_DT(q,beta):
+    return q/beta
+def isoclinas_DN_DT_LVE(k,r,alpha,n):
+    return r*(1-n/k)/alpha
+
+def plot_isoclinas(ax, r, alpha, q, beta, label):
+    values = np.linspace(0, 100, 100)
+    ax.set_title(label)
+    ax.hlines(y=isoclinas_DN_DT(r, alpha), xmin=min(values), xmax=max(values), label = 'Isoclina Presas', color='#FFD700', linestyle= '--')
+    ax.vlines(x=isoclinas_DP_DT(q, beta), ymin=min(values), ymax=max(values), label = 'Isoclina Depredadores', color='black', linestyle= '--')
+    ax.set_ylim(bottom=0)
+    ax.set_xlim(left=0)
+    ax.legend()
+
+def plot_isoclinas2(ax, k, r, alpha, q, beta, label):
+    values = np.linspace(0, 100, 400)
+    
+    # Calcula las isoclinas para dN/dt
+    isoclinas_N = isoclinas_DN_DT_LVE(k,r,alpha, values)
+    
+    ax.set_title(label)
+
+    # Grafica las isoclinas para dN/dt
+    ax.plot(values, isoclinas_N, label='Isoclina Presas', color='#FFD700', linestyle='--')
+    
+    ax.vlines(x=isoclinas_DP_DT(q, beta), ymin=min(values), ymax=max(values), label='Isoclina Depredadores', color='black', linestyle='--')
+
+    ax.set_ylim(bottom=0)
+    ax.set_xlim(left=0)
+    ax.legend()
+
+
+def poblaciones():
+    tiempo = np.linspace(0, 400, 400)
+    n=50
+    p=20
+    r=0.1
+    q=0.1
+    alpha=0.005
+    beta=0.004
+    k=50
+    h=1
+    steps=399
+
+
+
+
+    fig, axs = plt.subplots(2,2, figsize=(18, 6))  
+        
+    n1Poblacion, n2Poblacion = runge_kutta_4(dN_dt, dP_dt,n,p,r,q,alpha,beta,h,steps)
+    plot_population(axs[0,0], tiempo, n1Poblacion, n2Poblacion, f'Ecuaciones normales')
+    axs[0, 0].plot(0, 0, 'ko', markersize=0.0001, label='Presas=50, r=0.1')
+    axs[0, 0].plot(0, 0, 'ko', markersize=0.0001, label='Depredadores=20, α=0.005, β=0.004, q=0.1')
+    axs[0, 0].legend()
+    axs[0, 0].set_xlabel("Tiempo")
+    axs[0, 0].set_ylabel("Poblacion")
+    axs[0, 0].set_title("Ecuaciones normales")
+
+    n1Poblacion, n2Poblacion = runge_kutta_4_2(dN_dt_LVE, dP_dt,n,p,r,q,alpha,beta,k,h,steps)
+    plot_population(axs[0,1], tiempo, n1Poblacion, n2Poblacion, f'Ecuaciones Extendidas')
+    axs[0, 1].plot(0, 0, 'ko', markersize=0.0001, label='Presas=50, r=0.1, k=50')
+    axs[0, 1].plot(0, 0, 'ko', markersize=0.0001, label='Depredadores=20, α=0.005, β=0.004, q=0.1')
+    axs[0, 1].legend()
+    axs[0, 1].set_xlabel("Tiempo")
+    axs[0, 1].set_ylabel("Poblacion")
+    axs[0, 1].set_title("Ecuaciones Extendidas")
+
+    n1=200
+    p1=0
+    r1=0.05
+    q1=0.15
+    alpha1=0.002
+    beta1=0.002
+    k1=300
+
+    n1Poblacion, n2Poblacion = runge_kutta_4(dN_dt, dP_dt,n1,p1,r1,q1,alpha1,beta1,h,steps)
+    plot_population(axs[1,0], tiempo, n1Poblacion, n2Poblacion, f'Ecuaciones normales')
+    axs[1, 0].plot(0, 0, 'ko', markersize=0.0001, label='Presas=200, r=0.05')
+    axs[1, 0].plot(0, 0, 'ko', markersize=0.0001, label='Depredadores=0, α=0.002, β=0.002, q=0.15')	
+    axs[1, 0].legend()
+    axs[1, 0].set_xlabel("Tiempo")
+    axs[1, 0].set_ylabel("Poblacion")
+    axs[1, 0].set_title("Ecuaciones normales")
+
+    n1Poblacion, n2Poblacion = runge_kutta_4_2(dN_dt_LVE, dP_dt,n1,p1,r1,q1,alpha1,beta1,k1,h,steps)
+    plot_population(axs[1,1], tiempo, n1Poblacion, n2Poblacion, f'Ecuaciones Extendidas')
+    axs[1, 1].plot(0, 0, 'ko', markersize=0.0001, label='Presas=200, r=0.05, k=300')
+    axs[1, 1].plot(0, 0, 'ko', markersize=0.0001, label='Depredadores=0, α=0.002, β=0.002, q=0.15')
+    axs[1, 1].legend()
+    axs[1, 1].set_xlabel("Tiempo")
+    axs[1, 1].set_ylabel("Poblacion")
+    axs[1, 1].set_title("Ecuaciones Extendidas")
+
+
+    fig.suptitle('Tiempo VS Poblacion', fontsize=12)
+
+    plt.tight_layout()
+    plt.show()
+
+
+#isoclinas
+
+def isoclinas():
+    n=50
+    p=20
+    r=0.1
+    q=0.1
+    alpha=0.005
+    beta=0.004
+    k=50
+    h=1
+    steps=399
+    r1=0.05
+    q1=0.15
+    alpha1=0.002
+    beta1=0.002
+    k1=300
+    fig2, axs2 = plt.subplots(2,2, figsize=(18, 6))  # 2 fila, 2 columnas
+    fig2.suptitle('Curvas Isoclinas y Campo Vectorial', fontsize=16)
+
+    plot_isoclinas(axs2[0,0],r,alpha,q,beta,"Isoclinicas no extendidas")
+    n1Poblacion, n2Poblacion = runge_kutta_4(dN_dt, dP_dt,100,10,r,q,alpha,beta,h,steps)
+    axs2[0,0].plot(n1Poblacion,n2Poblacion,label="P=10,N=100",color="red")
+    n1Poblacion, n2Poblacion = runge_kutta_4(dN_dt, dP_dt,80,5,r,q,alpha,beta,h,steps)
+    axs2[0,0].plot(n1Poblacion,n2Poblacion,label="P=5,N=80",color="blue")
+    n1Poblacion, n2Poblacion = runge_kutta_4(dN_dt, dP_dt,60,3,r,q,alpha,beta,h,steps)
+    axs2[0,0].plot(n1Poblacion,n2Poblacion,label="P=3,N=60",color="green")
+    n1Poblacion, n2Poblacion = runge_kutta_4(dN_dt, dP_dt,20,1,r,q,alpha,beta,h,steps)
+    axs2[0,0].plot(n1Poblacion,n2Poblacion,label="P=1,N=20",color="brown")
+    axs2[0,0].set_xlabel("Poblacion de presas")
+    axs2[0,0].set_ylabel("Poblacion de depredadores")
+
+    #PUNTOS
+    estabilidadPuntos(25,20,r,alpha,beta,q,"Punto de equilibrio 1")
+    axs2[0,0].plot(25, 20, 'ko', markersize=7, label='Punto de equilibrio inestable', color="orange")
+    axs2[0,0].legend(loc='upper right')
+
+    plot_isoclinas(axs2[1,0],r1,alpha1,q1,beta1,"Isoclinicas no extendidas")
+    n1Poblacion, n2Poblacion = runge_kutta_4(dN_dt, dP_dt,100,10,r1,q1,alpha1,beta1,h,steps)
+    axs2[1,0].plot(n1Poblacion,n2Poblacion,label="P=10,N=100",color="red")
+    n1Poblacion, n2Poblacion = runge_kutta_4(dN_dt, dP_dt,50,5,r1,q1,alpha1,beta1,h,steps)
+    axs2[1,0].plot(n1Poblacion,n2Poblacion,label="P=5,N=50",color="blue")
+    n1Poblacion, n2Poblacion = runge_kutta_4(dN_dt, dP_dt,20,2,r1,q1,alpha1,beta1,h,steps)
+    axs2[1,0].plot(n1Poblacion,n2Poblacion,label="P=2,N=20",color="green")
+    n1Poblacion, n2Poblacion = runge_kutta_4(dN_dt, dP_dt,200,15,r1,q1,alpha1,beta1,h,steps)
+    axs2[1,0].plot(n1Poblacion,n2Poblacion,label="P=15,N=200",color="brown")
+    axs2[1,0].set_ylim(bottom=0, top=50)
+    axs2[1,0].set_xlabel("Poblacion de presas")
+    axs2[1,0].set_ylabel("Poblacion de depredadores")
+
+    #PUNTOS
+    estabilidadPuntos(75,25,r1,alpha1,beta1,q1,"Punto de equilibrio 2")
+    axs2[1,0].plot(75, 25, 'ko', markersize=7, label='Punto de equilibrio inestable', color="orange")
+    axs2[1,0].legend(loc='upper left')
+
+
+    plot_isoclinas2(axs2[0,1],k,r,alpha,q,beta,"Isoclinicas extendidas")
+    n1Poblacion, n2Poblacion = runge_kutta_4_2(dN_dt_LVE, dP_dt,n,p,r,q,alpha,beta,k,h,steps)
+    axs2[0,1].plot(n1Poblacion,n2Poblacion, label='P=20,N=50', color="red")
+    axs2[0,1].scatter(n,p,color="black",label="Condiciones iniciales")
+    n1Poblacion, n2Poblacion = runge_kutta_4_2(dN_dt_LVE, dP_dt,90,50,r,q,alpha,beta,k,h,steps)
+    axs2[0,1].plot(n1Poblacion,n2Poblacion, label='P=50,N=90', color="blue")
+    axs2[0,1].scatter(90,50,color="black")
+    n1Poblacion, n2Poblacion = runge_kutta_4_2(dN_dt_LVE, dP_dt,10,10,r,q,alpha,beta,k,h,steps)
+    axs2[0,1].plot(n1Poblacion,n2Poblacion, label='P=10,N=10', color="green")
+    axs2[0,1].scatter(10,10,color="black")
+    axs2[0,1].set_xlabel("Poblacion de presas")
+    axs2[0,1].set_ylabel("Poblacion de depredadores")
+
+    #PUNTOS
+    estabilidadPuntosExtendida(25,10,r,alpha,beta,q,k,"Punto de equilibrio 3")
+    axs2[0,1].plot(25, 10, 'ko', markersize=7, label='Punto de equilibrio estable', color="pink")
+    axs2[0,1].legend()
+
+
+    plot_isoclinas2(axs2[1,1],k1,r1,alpha1,q1,beta1,"Isoclinicas extendidas")
+    n1Poblacion, n2Poblacion = runge_kutta_4_2(dN_dt_LVE, dP_dt,100,10,r1,q1,alpha1,beta1,k1,h,steps)
+    axs2[1,1].plot(n1Poblacion,n2Poblacion, label='P=10,N=100', color="red")
+    axs2[1,1].scatter(100,10,color="black",label="Condiciones iniciales")
+    n1Poblacion, n2Poblacion = runge_kutta_4_2(dN_dt_LVE, dP_dt,10,50,r1,q1,alpha1,beta1,k1,h,steps)
+    axs2[1,1].plot(n1Poblacion,n2Poblacion, label='P=50,N=10', color="blue")
+    axs2[1,1].scatter(10,50,color="black")
+    n1Poblacion, n2Poblacion = runge_kutta_4_2(dN_dt_LVE, dP_dt,70,40,r1,q1,alpha1,beta1,k1,h,steps)
+    axs2[1,1].plot(n1Poblacion,n2Poblacion, label='P=40,N=70', color="green")
+    axs2[1,1].scatter(70,40,color="black")
+    axs2[1,1].set_xlabel("Poblacion de presas")
+    axs2[1,1].set_ylabel("Poblacion de depredadores")
+
+    #PUNTOS
+    estabilidadPuntosExtendida(75,20,r1,alpha1,beta1,q1,k1,"Punto de equilibrio 4")
+    axs2[1,1].plot(75, 20, 'ko', markersize=7, label='Punto de equilibrio estable', color="pink")
+    axs2[1,1].legend()
+    
+
+    plt.tight_layout()
+    plt.show()
+
+def estabilidadPuntos(n, p, r, alpha, beta, q, caso):
+    J_evaluada = np.array([[r - alpha * p, -alpha * n],[beta * p, beta * n - q]])
+    
+    autovalores, autovectores = np.linalg.eig(J_evaluada)
+
+    print(caso)
+    if any(autovalores > 0):
+        print("Punto de equilibrio inestable")
+    elif any(autovalores == 0):
+        print("Punto de equilibrio neutral")
+    else:
+        print("Punto de equilibrio estable")
+    print(f"autovalores: {autovalores}\n")
+
+def estabilidadPuntosExtendida(n, p, r, alpha, beta, q, k, caso):
+    J_evaluada = np.array([[r * (1 - 2 * n / k) - alpha * p, -alpha * n],
+    [beta * p, beta * n - q]
+    ])
+    
+    autovalores, autovectores = np.linalg.eig(J_evaluada)
+
+    print(caso)
+    if any(autovalores > 0):
+        print("Punto de equilibrio inestable")
+    elif any(autovalores == 0):
+        print("Punto de equilibrio neutral")
+    else:
+        print("Punto de equilibrio estable")
+    print(f"autovalores: {autovalores}\n")
+
+def main():
+    poblaciones()
+    isoclinas()
+
+if __name__ == "__main__":
+    main()
